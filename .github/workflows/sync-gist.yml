@@ -1,0 +1,27 @@
+name: Sync canvas to Gist
+on:
+  push:
+    paths:
+      - 'otomatik-kanvas-denemesi.md'
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Read canvas file
+        id: read
+        run: |
+          CONTENT=$(cat otomatik-kanvas-denemesi.md | sed 's/"/\\"/g' | tr '\n' '\\n')
+          echo "content=$CONTENT" >> $GITHUB_OUTPUT
+
+      - name: Patch Gist
+        run: |
+          curl -X PATCH \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            -d "{\"files\": {\"otomatik-kanvas-denemesi.md\": {\"content\": \"${{ steps.read.outputs.content }}\"}}}" \
+            https://api.github.com/gists/5d10b9b6f84ea174da9a86968fbc7caf
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
